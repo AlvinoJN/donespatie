@@ -5,19 +5,19 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">Daftar User</div>
+                <div class="card-header">Daftar Produk</div>
 
                 <div class="card-body">
                     @can('create-product')
-                    <a href="{{ route('products.create') }}" class="btn btn-success btn-sm my-2"><i class="bi bi-plus-circle"></i> Add New Product</a>
+                    <a href="{{ route('products.create') }}" class="btn btn-success btn-sm my-2"><i class="bi bi-plus-circle"></i> Tambah Produk Baru</a>
                     @endcan
                     <table id="tbl_list" class="table table-striped table-bordered" cellspacing="0" width="100%">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th>Action</th>
-                                <th>Date</th>
+                                <th>Nama</th>
+                                <th>Deskripsi</th>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -31,38 +31,27 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.1.53/build/pdfmake.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.1.53/build/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.print.min.js"></script>
+
 <script>
     $(document).ready(function() {
-        $('.table').DataTable({
+        $('#tbl_list').DataTable({
             processing: true,
             serverSide: true,
             ajax: "{{ route('products.index') }}",
-            columns: [{
+            columns: [
+                {
                     data: 'name',
                     name: 'name'
                 },
                 {
                     data: 'description',
                     name: 'description'
-                },
-                {
-                    data: 'action',
-                    name: 'action',
-                    orderable: false,
-                    searchable: false,
-                    render: function(data, type, row) {
-                        var buttons = '';
-
-                        @can('edit-product')
-                        buttons += '<a href="/products/' + row.id + '/edit" class="btn btn-warning btn-sm"><i class="bi bi-pencil"></i> Edit</a>';
-                        @endcan
-
-                        @can('delete-product')
-                        buttons += ' <button class="btn btn-danger btn-sm delete-btn" data-id="' + row.id + '" data-name="' + row.name + '"><i class="bi bi-trash"></i> Delete</button>';
-                        @endcan
-
-                        return buttons;
-                    }
                 },
                 {
                     data: 'created_at',
@@ -75,7 +64,45 @@
 
                         return day + '-' + month + '-' + year;
                     }
-                }
+                },
+                {
+                    data: 'action',
+                    name: 'action',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row) {
+                        var buttons = '';
+                        
+                        @can('edit-product')
+                        buttons += '<a href="/products/' + row.id + '/edit" class="btn btn-warning btn-sm"><i class="bi bi-pencil"></i> Edit</a>';
+                        @endcan
+                        
+                        @can('delete-product')
+                        buttons += ' <button class="btn btn-danger btn-sm delete-btn" data-id="' + row.id + '" data-name="' + row.name + '"><i class="bi bi-trash"></i> Delete</button>';
+                        @endcan
+                        
+                        return buttons;
+                    }
+                },
+                
+            ],
+            dom: 'Bfrtip',  // Add export buttons to the DOM
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    text: 'Export Excel',
+                    className: 'btn btn-success btn-sm'
+                },
+                {
+                    extend: 'csvHtml5',
+                    text: 'Export CSV',
+                    className: 'btn btn-info btn-sm'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: 'Export PDF',
+                    className: 'btn btn-danger btn-sm'
+                },
             ]
         });
 
@@ -91,7 +118,7 @@
                         _token: '{{ csrf_token() }}'
                     },
                     success: function(response) {
-                        $('.table').DataTable().ajax.reload();
+                        $('#tbl_list').DataTable().ajax.reload();
                         alert('Product deleted successfully');
                     },
                     error: function(xhr, status, error) {
